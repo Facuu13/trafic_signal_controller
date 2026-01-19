@@ -16,6 +16,8 @@ class TrafficLight:
     def __init__(self):
         self.state = TrafficLightState.RED
         self.state_started = time.time()
+        self.auto_mode = True
+        self.force_state = None
 
     def next_state(self):
         if self.state == TrafficLightState.RED:
@@ -33,14 +35,40 @@ class TrafficLight:
             return True
         else:
             return False
+    
+    def handle_command(self, cmd: str):
+        if cmd == "auto":
+            self.auto_mode = True
+            self.force_state = None
+            print("Switched to automatic mode.")
+        elif cmd in ["red", "green", "yellow"]:
+            self.auto_mode = False
+            self.force_state = TrafficLightState[cmd.upper()]
+            self.state = self.force_state
+            self.state_started = time.time()
+            print(f"Forced state to: {self.state.name}")
+    
+    def check_for_input(self):
+        import select, sys
+        return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
 
     def run(self):
-        print(f"Starting traffic light simulation. Initial state: {self.state.name}")
+        print("Traffic light system started. Type 'auto', 'red', 'green', or 'yellow' to control.")
         while True:
             now = time.time()
-            if self.update(now):
-                print(f"Traffic light changed to: {self.state.name}")
+            if self.auto_mode:
+                if self.update(now):
+                    print(f"State changed to: {self.state.name}")
+            else:
+                if self.force_state and self.state != self.force_state:
+                    self.state = self.force_state
+                    self.state_started = now
+                    print(f"State forced to: {self.state.name}")
             time.sleep(0.1)
+            if self.check_for_input():
+                cmd = input().strip().lower()
+                self.handle_command(cmd)
+        
 
 if __name__ == "__main__":
     traffic_light = TrafficLight()
