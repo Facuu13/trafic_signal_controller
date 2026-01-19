@@ -15,6 +15,7 @@ DURATION = {
 class TrafficLight:
     def __init__(self):
         self.state = TrafficLightState.RED
+        self.state_started = time.time()
 
     def next_state(self):
         if self.state == TrafficLightState.RED:
@@ -24,11 +25,22 @@ class TrafficLight:
         elif self.state == TrafficLightState.YELLOW:
             self.state = TrafficLightState.RED
 
-    def run(self):
-        while True:
-            print(f"Traffic light is {self.state.name}")
-            time.sleep(DURATION[self.state])
+    def update(self,now):
+        elapsed = now - self.state_started
+        if elapsed >= DURATION[self.state]:
             self.next_state()
+            self.state_started = now
+            return True
+        else:
+            return False
+
+    def run(self):
+        print(f"Starting traffic light simulation. Initial state: {self.state.name}")
+        while True:
+            now = time.time()
+            if self.update(now):
+                print(f"Traffic light changed to: {self.state.name}")
+            time.sleep(0.1)
 
 if __name__ == "__main__":
     traffic_light = TrafficLight()
